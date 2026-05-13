@@ -181,18 +181,21 @@ Three paths, in preference order:
 
 2. **Agent generates a cover** — only if the runtime exposes an image-generation tool. Target: 1500×600, deterministic hue from a title hash, bold title overlay, subtle drop shadow + grain texture, small "AI SHOWCASE" watermark.
 
-3. **Parameterized placeholder URL fallback.** No image generation, no creator-provided cover — generate a deterministic placeholder URL on the fly using a free, no-auth service:
+3. **Parameterized placeholder URL fallback.** No image generation, no creator-provided cover — generate a placeholder URL on the fly using a free, no-auth service that puts the entry's **title** on a branded background:
 
    ```
-   https://placehold.co/1500x600/2A2A3E/FFFFFF/png?text=AI+SHOWCASE+%C2%B7+<Domain>&font=lato
+   https://placehold.co/1500x600/2A2A3E/FFFFFF/png?text=<URL_ENCODED_TITLE>&font=lato
    ```
 
-   Where `<Domain>` is the URL-encoded primary domain (e.g., `Tooling+%26+Workflow`, `Game+Code`, `Marketing`). Background is the brand navy `#2A2A3E`, text white, font Lato. Set this as the page cover URL. Free, HTTPS, no API key needed, deterministic per (brand + domain) combination.
+   Background is the brand navy `#2A2A3E`, text white, font Lato. Free, HTTPS, no API key needed.
 
-   Example for a Tooling & Workflow entry:
-   `https://placehold.co/1500x600/2A2A3E/FFFFFF/png?text=AI+SHOWCASE+%C2%B7+Tooling+%26+Workflow&font=lato`
+   URL-encoding rules: spaces → `+`; `:` → `%3A`; `&` → `%26`; em-dash → `%E2%80%94`; etc. Example for an entry titled "Game Feature Mindmap from Codebase":
 
-   Don't include the full title — it overflows the placeholder and looks busy. The Domain anchor is enough visual differentiation for the gallery card.
+   `https://placehold.co/1500x600/2A2A3E/FFFFFF/png?text=Game+Feature+Mindmap+from+Codebase&font=lato`
+
+   **Title only.** Do not append the hook, the domain, or "AI SHOWCASE" — the cover is the *one* place where each entry visually differentiates itself, and the Hook + Domain are already visible right below the cover on every gallery card (they're separate Notion properties). Putting them on the cover too is redundant noise.
+
+   placehold.co auto-shrinks the text to fit the 1500×600 frame. Titles up to ~12 words (the SKILL.md cap) remain legible.
 
 You should never skip the cover. The placeholder URL works in any runtime — it's just a URL the agent embeds. Every entry gets a cover.
 
