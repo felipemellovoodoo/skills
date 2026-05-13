@@ -1,0 +1,13 @@
+# Skill development artifacts — kept locally for reference, not pushed to the public repo
+ai-showcase/Docs/
+ai-showcase/samples/
+ai-showcase/README.md
+
+# Standard ignores
+*.log
+.DS_Store
+.env
+.env.local
+node_modules/
+dist/
+tmp/
