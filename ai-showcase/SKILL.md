@@ -29,7 +29,11 @@ These rules shape the whole interview; revisit them whenever you're unsure how t
 6. **Final publish gate is mandatory.** Before the Notion write (Step 7), show the creator a recap of the entry and require an explicit `publish` confirmation. See Step 6.5.
 7. **Confirm any mapping you do, never translate silently.** If the creator says "Medium effort" and you map to `Days`, say so out loud: "I'd call that Days — sound right?" The creator owns the value, not you.
 8. **The skill is the only runtime dependency.** You do not invoke shell commands, npm packages, or external CLIs. Everything you need — Notion search/write, optional image generation — is done through MCPs already available in the session. If a capability isn't available, gracefully degrade (see Step 0).
-9. **Avoid Notion's auto-link traps in prose.** Notion silently turns any string that looks like a domain or filename (e.g., `claude.ai`, `SKILL.md`, `markmap.js.org`) into a clickable link — even mid-sentence, even if you didn't write it as a link. When such strings appear in your output, either wrap them in inline code (`` `claude.ai` ``) or rephrase ("Claude on the web") so they don't get auto-linkified. When you *do* want a link, anchor text must be **descriptive prose** different from the URL (e.g., `[interactive markmap renderer](https://markmap.js.org/repl)`, not `[markmap.js.org/repl](https://markmap.js.org/repl)` — Notion will downgrade the second to `http://` and look broken).
+9. **Avoid Notion's auto-link traps everywhere — including inside `<summary>` and `<details>` tags.** Notion silently turns any string that looks like a domain or filename (e.g., `claude.ai`, `SKILL.md`, `extract_frames.py`, `markmap.js.org`) into a clickable link — even mid-sentence, even inside `<summary>` text, even when you didn't write it as a link. **Always wrap such strings in inline backticks** (`` `extract_frames.py` ``, `` `claude.ai` ``) so Notion treats them as code and skips linkification. Specific places to audit before publishing:
+   - `<summary>` text inside `<details>` toggles (e.g., `<summary>Show extract_frames.py</summary>` will get mangled — use `<summary>Show \`extract_frames.py\`</summary>` instead)
+   - Bare filenames mid-sentence (use backticks)
+   - Bare domains mid-sentence (use backticks or rephrase, e.g., "Claude on the web" instead of `claude.ai`)
+   - Markdown link anchor text **must differ from the URL**. `[interactive markmap renderer](https://markmap.js.org/repl)` is fine; `[markmap.js.org/repl](https://markmap.js.org/repl)` will be silently downgraded to `http://` and look broken. The anchor must be descriptive prose, not the URL repeated.
 
 ## Step 0 — Pre-flight validation
 
@@ -236,27 +240,53 @@ Assemble the full submission object matching the v2.1.0 schema:
 }
 ```
 
-### Self-validation before publishing
+### Self-validation before publishing — strict checklist
 
-You are responsible for validating the JSON before Step 7. There is no external validator — the only quality gate is you. Check:
+You are responsible for validating the JSON before Step 7. There is no external validator — the only quality gate is you. **Walk through this checklist literally, item by item, and mark each `✓` or `✗`. If any item is `✗`, fix it before proceeding to Step 6.5.** Do not show the publish recap until every item passes.
 
-- All required string fields are non-empty: `title`, `tagline`, `hook`, `outcome`.
-- Length caps: title ≤ 40 chars, tagline ≤ 30 chars and ≤ 5 words, hook ≥ 40 and ≤ 50 chars (target ≤ 45 for gallery-card fit), outcome ≥ 60 chars with an evidence anchor.
-- Section minimums: `sections.whatAccomplished` ≥ 60 chars, `sections.howItWasDone` ≥ 60 chars.
-- `reuseType` is one of `Prompt | Pattern | Both | N/A`. When it's not `N/A`, `sections.howToReuse` must be present and non-empty.
-- `reusability` is one of `Easy | Medium | Hard | Bespoke | null`.
-- `effort` is one of `Hours | Days | Weeks | Months | null` — **never the string `"Medium"`** (that's a Reusability value). If the creator said "Medium" for effort, confirm your mapping out loud before storing.
-- `domain[]` values come from the v1 vocab (or new ones intentionally added by the creator).
-- `media[].kind` is one of `image | video | gif | embed | link`.
-- `contributors[]` items have at least a `name`.
-- `tools[]`, `domain[]`, `team[]`, `models[]` are arrays of strings (possibly empty).
-- No jargon in `hook` or `outcome` (re-read both with a non-technical lens before continuing).
+**Required fields present and non-empty:**
+- `[ ]` `title` is non-empty
+- `[ ]` `tagline` is non-empty *(missing Tagline is the most common failure — check this first)*
+- `[ ]` `hook` is non-empty
+- `[ ]` `outcome` is non-empty
 
-If any check fails, fix the JSON before showing the recap in Step 6.5 — never present an invalid submission for publish.
+**Length caps (count characters, not words, unless noted):**
+- `[ ]` `title` ≤ 40 chars *(over 40 wraps the gallery card)*
+- `[ ]` `tagline` ≤ 30 chars AND ≤ 5 words
+- `[ ]` `hook` ≥ 40 AND ≤ 50 chars *(over 50 gets truncated on default cards)*
+- `[ ]` `outcome` ≥ 60 chars
+- `[ ]` `sections.whatAccomplished` ≥ 60 chars
+- `[ ]` `sections.howItWasDone` ≥ 60 chars
+
+**Quality:**
+- `[ ]` `outcome` contains at least one **concrete evidence anchor**: a number, a named user/team, or a specific before/after
+- `[ ]` `hook` reads naturally to a non-technical colleague — no `MCP`, `agent skill`, `runtime`, `LLM` jargon
+- `[ ]` `outcome` reads naturally to a non-technical colleague — same jargon check
+
+**Controlled vocabularies:**
+- `[ ]` `reuseType` is exactly one of `Prompt | Pattern | Both | N/A`
+- `[ ]` When `reuseType !== "N/A"`, `sections.howToReuse` is present and non-empty
+- `[ ]` `reusability` is one of `Easy | Medium | Hard | Bespoke | null`
+- `[ ]` `effort` is one of `Hours | Days | Weeks | Months | null` — **never the string `"Medium"`** (that belongs to Reusability)
+- `[ ]` `media[].kind` values are all one of `image | video | gif | embed | link`
+
+**Shape:**
+- `[ ]` `contributors[]` items each have at least a `name`
+- `[ ]` `domain[]`, `team[]`, `models[]`, `toolsUsed[]` are all arrays (possibly empty)
+
+**Body integrity (re-read the page body draft as if you were a reader):**
+- `[ ]` No bare filenames/domains in `<summary>` text or prose — every one is wrapped in backticks
+- `[ ]` All markdown links have anchor text **different** from the URL
+- `[ ]` No code block uses `plain text` as the language label — use `text` (Notion canonicalises it the same way)
+- `[ ]` The Archive (JSON) toggle's children are tab-indented
+- `[ ]` The Hero callout is absent (we render properties at the top, not in a body callout)
+- `[ ]` There is no footer line (no `*Submitted via ai-showcase…*`)
+
+If ANY item is `✗`, fix it before continuing. Then re-run the entire checklist. Only when every item is `✓` may you proceed to the publish gate.
 
 ## Step 6.5 — Final confirmation gate
 
-This is **the only quality gate** before the entry goes live in the public gallery. Do not skip it.
+This is the creator-facing confirmation gate. By the time you reach it, the **strict self-validation checklist in Step 6 must have every item marked `✓`** — if it doesn't, go back and fix the failing items before showing the recap. Do not present an invalid submission to the creator and ask them to confirm it.
 
 Present the creator with a recap and require an explicit confirmation. Use language close to:
 
@@ -376,6 +406,19 @@ If anything failed during the Notion write, surface the full JSON to the creator
 **Domain** (Notion property, multi-select, v1 starters; new values allowed): `Game Design`, `Game Code`, `Tooling & Workflow`, `Research`, `Product/Design`, `Operations`, `Marketing`, `Comms`, `Creative`, `Data/Analytics`, `People/HR`.
 
 **Tools-used** (archive JSON only, free-form): any tools the creator wants to credit — Cursor, Claude Code, Codex, Notion MCP, Figma, Loom, etc. Not used for filtering; not a Notion property.
+
+## Common failures observed in real submissions
+
+These are the specific patterns that have leaked through earlier versions of this skill. Catch them in the Step 6 checklist.
+
+- **Missing `tagline`.** The most common failure. Tagline was added later and submitters using stale skill versions skipped it. If your version of this SKILL.md has a Tagline field, it is **required** — do not write to Notion without one. If the creator hasn't provided it, ask before the publish gate.
+- **Hook over 50 chars.** Original cap was 100; current is 50. Notion truncates around 52 chars on default cards. If you find yourself wanting to keep a hook over 50, propose two-three tighter rewrites and let the creator pick.
+- **Title over 40 chars.** Notion wraps gallery-card titles at ~40 chars and the card layout breaks. Same procedure: propose tighter versions.
+- **Filenames or domains as bare prose inside `<summary>` tags.** Notion auto-linkifies `extract_frames.py`, `claude.ai`, `markmap.js.org`, etc. Always wrap such strings in inline backticks even inside summaries.
+- **Markdown links whose anchor text equals the URL.** Notion silently downgrades `https://` to `http://`. Anchor text must be descriptive prose, not the URL.
+- **Code blocks with `plain text` or auto-assigned language labels.** Use `text` for prompts (Notion canonicalises it as "plain text" — same internal language, fine), `bash` for shell, `powershell` for PS, real languages for code. Never leave a code block label-less if the content isn't English (Notion will guess `javascript` or similar).
+- **Outcome without an evidence anchor.** "People save time" / "wins surface" without a number, named user, or before/after is a soft Outcome. Pushback once with a concrete rewrite; if the creator can't or won't quantify, refuse to publish (the rule from operating principle 2).
+- **Submitting an entry that supersedes an older one without updating the older's `Status` and the newer's `Supersedes` relation.** When two entries exist for the same idea, mark the older as `Status = Superseded` and link the newer's `Supersedes` property to the older's URL. Don't leave duplicates floating in the Active view.
 
 ## Edge cases
 
