@@ -21,6 +21,7 @@ These rules shape the whole interview; revisit them whenever you're unsure how t
    - **Tagline**: ≤ **5 words / ≤ 30 characters** — the punchy clickbait line rendered on the cover image. Different from the Hook: the Tagline is what someone sees *on* the thumbnail (5-word teaser); the Hook is the one-sentence subtitle *below* the card title.
    - **Hook**: ≥ 40 characters of substantive content, **≤ 50 characters hard cap, target ≤ 45** so it fits a Notion gallery card without truncation. Notion truncates hooks around 52–55 chars on default card sizes. Even with Large cards, give the hook enough margin. One sentence, no jargon.
    - **Outcome**: ≥ 60 characters with at least one concrete evidence anchor (a number, a named user/team, or a specific before/after).
+   - **Author**: at least one Notion user (resolved via `notion-get-users`). The Author property is People-type and renders the user's avatar + name on the gallery card. Multi-author is allowed (co-creators).
    - **What this accomplished** section: ≥ 60 characters.
    - **How it was done** section: ≥ 60 characters.
 3. **Length conventions, in summary.** Title ≤ 40 chars · Tagline ≤ 5 words / 30 chars · Hook ≤ 50 chars (target ≤ 45). If the creator provides anything longer than the hard caps, propose a tighter version and ask the creator to pick.
@@ -111,6 +112,7 @@ Walk down the required fields one at a time. Skip any you already extracted and 
 - **What this accomplished** — outcome-focused, peer-readable, **≥ 60 chars**. Ask: "In plain language, what's the win? Who benefits and how?"
 - **How it was done** — technique at a high level, **≥ 60 chars**. Ask: "How did you build this? Walk me through the approach, not every line — just enough that a peer could follow."
 - **Outcome** — one or two sentences with at least one **concrete evidence anchor**: a number, a named user/team that used it, or a specific before/after. **≥ 60 chars, no jargon.** Ask: "What changed because this exists? Give me one specific anchor — a number, a named person who used it, or a before/after — so a reader can judge whether to believe the claim." If the creator gives a generic answer ("people share more"), push back with a concrete rewrite and ask them to confirm or correct.
+- **Author** — at least one Notion user (the creator and any co-authors). Ask: "Who built this? Tell me your name (or names, if it's a team effort) and I'll resolve to your Notion accounts." Resolve each name to a Notion user ID via the Notion MCP's `notion-get-users` tool. If a name can't be resolved (typo, person isn't in the workspace), ask the creator to confirm spelling or paste the user's Notion profile URL. Store as a list of `{ name, notionUserId }` objects in the archive JSON; set the Author property as a People property with the resolved user IDs.
 
 ### Pushback rhythm
 
@@ -175,8 +177,8 @@ In this order:
    >   - **Team or Squad**: free text.
    >   - **Models**: Sonnet, Opus, Composer, GPT-5, etc.
    >   - **Tools used**: Cursor, Claude Code, Codex, Notion MCP, Figma, Loom, whatever was in your stack."
-5. **Co-contributors** — only ask if the creator implied others were involved:
-   > "Anyone else worth crediting? If they have Notion accounts in this workspace, share their name or email and I'll resolve them for inline `@-mentions`."
+5. **Co-authors check-in** — only ask if you haven't already collected multiple authors during the required-fields pass:
+   > "Anyone else who should be credited as an author? Names or emails work — I'll add them to the Author property."
 6. **Anything else** — one final invitation:
    > "Anything else you want in the page? Author's notes, related links, gotchas?"
 
@@ -208,11 +210,11 @@ You should never skip the cover. The placeholder URL works in any runtime — it
 
 ## Step 6 — Compose the archive JSON
 
-Assemble the full submission object matching the v2.1.0 schema:
+Assemble the full submission object matching the v2.2.0 schema:
 
 ```jsonc
 {
-  "schemaVersion": "2.1.0",
+  "schemaVersion": "2.2.0",
   "submittedAt": "<ISO 8601 timestamp now>",
   "title": "...",
   "tagline": "...",
@@ -224,7 +226,9 @@ Assemble the full submission object matching the v2.1.0 schema:
   "reusability": "Easy",                    // Easy | Medium | Hard | Bespoke | null
   "effort": "Days",                         // Hours | Days | Weeks | Months | null
   "team": ["Engineering"],
-  "contributors": [{ "name": "Alice", "notionUserId": "..." }],
+  "authors": [
+    { "name": "Felipe Mello", "notionUserId": "1aad872b-..." }
+  ],
   "models": ["Sonnet"],
   "toolsUsed": ["Cursor", "Claude Code"],   // Free-form list of tools actually used; archive-only
   "media": [
@@ -246,9 +250,10 @@ You are responsible for validating the JSON before Step 7. There is no external 
 
 **Required fields present and non-empty:**
 - `[ ]` `title` is non-empty
-- `[ ]` `tagline` is non-empty *(missing Tagline is the most common failure — check this first)*
+- `[ ]` `tagline` is non-empty *(missing Tagline is a common failure — check this first)*
 - `[ ]` `hook` is non-empty
 - `[ ]` `outcome` is non-empty
+- `[ ]` `authors[]` has at least one resolved Notion user (with a valid `notionUserId`)
 
 **Length caps (count characters, not words, unless noted):**
 - `[ ]` `title` ≤ 40 chars *(over 40 wraps the gallery card)*
@@ -271,7 +276,7 @@ You are responsible for validating the JSON before Step 7. There is no external 
 - `[ ]` `media[].kind` values are all one of `image | video | gif | embed | link`
 
 **Shape:**
-- `[ ]` `contributors[]` items each have at least a `name`
+- `[ ]` `authors[]` items each have a `name` AND a `notionUserId` (resolved via `notion-get-users`)
 - `[ ]` `domain[]`, `team[]`, `models[]`, `toolsUsed[]` are all arrays (possibly empty)
 
 **Body integrity (re-read the page body draft as if you were a reader):**
@@ -296,6 +301,7 @@ Present the creator with a recap and require an explicit confirmation. Use langu
 > **Tagline** *(on the cover)*: <tagline>
 > **Hook** *(under the cover)*: <hook>
 > **Outcome**: <outcome>
+> **Author(s)**: <resolved Notion users, comma-separated>
 > **Reuse type**: <reuseType>
 > **Domain**: <domain comma-separated>
 > **Sections**: What ✓, How ✓<, How-to-reuse ✓>
@@ -322,8 +328,9 @@ Use the Notion MCP to create a new page in the AI Showcase database.
 | ------------- | -------------- | -------------------------------------------------------------- |
 | Title         | Title          | `<title>` (≤ 40 chars)                                         |
 | Tagline       | Rich Text      | `<tagline>` (≤ 5 words / 30 chars; renders on the cover image) |
-| Hook          | Rich Text      | `<hook>` (≤ 100 chars; renders under the card title)           |
-| Outcome       | Rich Text      | `<outcome>`                                                    |
+| Hook          | Rich Text      | `<hook>` (≤ 50 chars; renders under the card title)            |
+| Outcome       | Rich Text      | `<outcome>` (≥ 60 chars with evidence anchor)                  |
+| Author        | People         | `<authors[]>` — list of resolved Notion user IDs               |
 | Status        | Select         | `Active` (default for new submissions)                         |
 | Domain        | Multi-select   | `<domain[]>`                                                   |
 | Reuse Type    | Select         | `<reuseType>`                                                  |
@@ -411,7 +418,8 @@ If anything failed during the Notion write, surface the full JSON to the creator
 
 These are the specific patterns that have leaked through earlier versions of this skill. Catch them in the Step 6 checklist.
 
-- **Missing `tagline`.** The most common failure. Tagline was added later and submitters using stale skill versions skipped it. If your version of this SKILL.md has a Tagline field, it is **required** — do not write to Notion without one. If the creator hasn't provided it, ask before the publish gate.
+- **Missing `tagline`.** A common failure. Tagline was added later and submitters using stale skill versions skipped it. If your version of this SKILL.md has a Tagline field, it is **required** — do not write to Notion without one. If the creator hasn't provided it, ask before the publish gate.
+- **Missing `Author` people property.** Equally common to missing tagline. Always resolve at least one Notion user via `notion-get-users` and set the Author property; the gallery card surfaces this as an avatar + name and entries without it look unowned.
 - **Hook over 50 chars.** Original cap was 100; current is 50. Notion truncates around 52 chars on default cards. If you find yourself wanting to keep a hook over 50, propose two-three tighter rewrites and let the creator pick.
 - **Title over 40 chars.** Notion wraps gallery-card titles at ~40 chars and the card layout breaks. Same procedure: propose tighter versions.
 - **Filenames or domains as bare prose inside `<summary>` tags.** Notion auto-linkifies `extract_frames.py`, `claude.ai`, `markmap.js.org`, etc. Always wrap such strings in inline backticks even inside summaries.
