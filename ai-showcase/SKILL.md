@@ -231,7 +231,47 @@ No Hero callout. No footer.
 
 If the write failed → show full JSON in a code block, tell them to paste it back in a new session to retry.
 
-If the creator says yes → proceed to Step 9. If no → end the session.
+If the creator says yes → proceed to Step 8.5. If no → check for attachments in Step 8.5 first.
+
+## Step 8.5 — Upload attachments
+
+Notion's API does not support file uploads, so any attachments must be added manually by the creator. This step catches that gap.
+
+**Detect attachment candidates:** Review everything the creator shared or mentioned during the interview — pasted prompts, scripts, skill files, HTML demos, spreadsheets, code snippets, PDFs, slide decks. Build a mental list of anything that exists as a file (not just inline text).
+
+**Always ask**, even if no files were mentioned:
+
+> "Before we move on — do you have any files to attach to this entry? Things like:
+> - The actual prompt, script, or skill file (`.md`, `.txt`, `.py`, etc.)
+> - An HTML demo or prototype
+> - A spreadsheet, PDF, or slide deck
+> - Any other artifact someone would need to try this themselves
+>
+> I can't upload files through the API, but it takes 30 seconds — I'll walk you through it."
+
+**If the creator mentioned or pasted specific files during the interview**, call them out by name:
+
+> "You mentioned `[filename]` earlier — that's exactly the kind of thing worth attaching so people can grab it directly."
+
+**If yes (they have files to upload):**
+
+Walk them through it:
+
+> "Here's how to attach them:
+> 1. Open your entry: **[URL]**
+> 2. Click inside the page body — I'd suggest right above the **Archive (JSON)** toggle
+> 3. Type `/file` and select **File** from the slash menu
+> 4. Click **Upload** and pick your file
+> 5. Optionally add a caption describing what it is
+> 6. Repeat for each file
+>
+> Let me know once they're uploaded and we'll keep going."
+
+Wait for confirmation before moving on. If they hit issues, troubleshoot (wrong file type, too large, etc.).
+
+**If no:** Acknowledge and move on.
+
+After attachments are handled (or skipped), return to where the creator left off — if they accepted the thumbnail offer in Step 8, proceed to Step 9. If they declined, end the session.
 
 ---
 
